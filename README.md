@@ -1,7 +1,8 @@
-📚 BuscaLibro: Sistema de Gestión de Pedidos e Inventario
+## 📚 BuscaLibro: Sistema de Gestión de Pedidos e Inventario
+
 BuscaLibro es una solución web diseñada para optimizar el flujo de trabajo de librerías y centros de lectura. El sistema centraliza el control de inventario, el seguimiento de pedidos y la generación de inteligencia de negocios mediante reportes estadísticos, resolviendo la falta de visibilidad en las fechas de entrega y disponibilidad de ejemplares.
 
-📋 Problemática y Contexto
+## 📋 Problemática y Contexto
 Actualmente, la gestión manual o descentralizada en las librerías provoca errores en el control de stock y retrasos en las entregas. BuscaLibro nace para:
 
 Eliminar la incertidumbre sobre la disponibilidad de ejemplares.
@@ -12,7 +13,7 @@ Interconectarse con otros modelos de negocio mediante el intercambio de archivos
 
 Proveer datos cuantificables para la toma de decisiones estratégicas.
 
-🚀 Requerimientos Funcionales (RF)
+## 🚀 Requerimientos Funcionales (RF)
 El sistema se ha desarrollado bajo los siguientes pilares funcionales:
 
 Gestión de Pedidos e Inventario
