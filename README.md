@@ -1,40 +1,56 @@
-## 📚 BuscaLibro: Sistema de Gestión de Pedidos e Inventario
 
-BuscaLibro es una solución web diseñada para optimizar el flujo de trabajo de librerías y centros de lectura. El sistema centraliza el control de inventario, el seguimiento de pedidos y la generación de inteligencia de negocios mediante reportes estadísticos, resolviendo la falta de visibilidad en las fechas de entrega y disponibilidad de ejemplares.
+---
 
-## 📋 Problemática y Contexto
-Actualmente, la gestión manual o descentralizada en las librerías provoca errores en el control de stock y retrasos en las entregas. BuscaLibro nace para:
+# 📚 BuscaLibro | Order & Inventory Management System
 
-Eliminar la incertidumbre sobre la disponibilidad de ejemplares.
+**BuscaLibro** is a specialized web solution designed to optimize the workflow of bookstores and reading centers. The system centralizes inventory control, order tracking, and business intelligence through statistical reporting, effectively solving common issues such as visibility gaps in delivery dates and stock availability.
 
-Automatizar la actualización del inventario en tiempo real.
+---
 
-Interconectarse con otros modelos de negocio mediante el intercambio de archivos JSON.
+## 📋 Context & Problem Statement
 
-Proveer datos cuantificables para la toma de decisiones estratégicas.
+Manual and decentralized management in bookstores often leads to critical stock errors and delivery delays. **BuscaLibro** was developed to:
 
-## 🚀 Requerimientos Funcionales (RF)
-El sistema se ha desarrollado bajo los siguientes pilares funcionales:
+* **Eliminate Uncertainty:** Provide real-time visibility into book availability.
+* **Automate Workflow:** Synchronize inventory updates instantly with every transaction.
+* **Interoperability:** Connect with external business models via JSON data exchange.
+* **Data-Driven Decisions:** Offer quantifiable data for strategic growth.
 
-Gestión de Pedidos e Inventario
-RF-01 & RF-03: Registro y edición de pedidos vinculando usuario, libro y fechas automáticas.
+---
 
-RF-02 & RF-04: Validación de stock antes de confirmar y actualización automática (suma/resta) de unidades.
+## 🚀 Functional Requirements (FR)
 
-RF-09 & RF-10: Borrado lógico de pedidos y gestión completa de bajas (CRUD) de libros y autores.
+### Inventory & Order Management
 
-Consultas y Visualización
-RF-05: Búsqueda individual por ISBN o código para verificar estado (Disponible, Prestado, Reserva).
+* **FR-01 & FR-03 (Order Processing):** Create and edit orders by linking users and books with automated check-out/return dates.
+* **FR-02 & FR-04 (Stock Logic):** Pre-confirmation stock validation and automatic unit increment/decrement.
+* **FR-09 & FR-10 (System Cleanup):** Logical deletion of orders and full CRUD management for books and authors, ensuring no active loans exist before removal.
 
-RF-06: Listado general con filtros avanzados por autor, categoría o disponibilidad.
+### Search & Visualization
 
-RF-07: Historial detallado de préstamos por usuario.
+* **FR-05 (Individual Query):** Real-time status check (Available, Loaned, or Reserved) via ISBN or internal code.
+* **FR-06 (Global Inventory):** Comprehensive catalog with advanced filtering by author, category, or availability.
+* **FR-07 (User History):** Detailed tracking of loan behavior and return patterns per user.
 
-Inteligencia y Reportes (RF-08)
-El sistema genera informes tabulares y estadísticos que incluyen:
+### Business Intelligence (FR-08)
 
-📈 Libros con mayor demanda.
+The system generates tabular and statistical reports including:
 
-📊 Frecuencia de préstamos por categoría.
+* 📈 **Top Demand:** Most requested book titles.
+* 📊 **Category Analytics:** Loan frequency grouped by genre/category.
+* ✅ **Reliability Rate:** Percentage of on-time returns vs. delays.
 
-✅ Porcentaje de cumplimiento en devoluciones.
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| **Frontend** | React.js |
+| **Backend** | Node.js |
+| **Database** | PostgreSQL |
+| **Data Format** | JSON (Inbound/Outbound) |
+
+---
+
+ntegration?
