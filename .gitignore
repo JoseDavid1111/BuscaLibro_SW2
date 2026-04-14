@@ -1,0 +1,15 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno
+.env
+.env.local
+
+# Builds
+dist/
+build/
+.vite/
+
+# Logs y SO
+npm-debug.log*
+.DS_Store

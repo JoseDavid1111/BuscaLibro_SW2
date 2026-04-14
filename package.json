@@ -1,0 +1,20 @@
+{
+  "name": "buscalibro",
+  "version": "1.0.0",
+  "description": "Monorepo para el proyecto buscalibro",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "install-all": "npm install",
+    "test": "npm test --workspaces"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
