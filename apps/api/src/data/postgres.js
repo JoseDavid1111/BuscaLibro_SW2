@@ -276,6 +276,17 @@ async function updateOrder(orderId, payload) {
         [orderId, item.bookId, item.quantity, book.price],
         client
       );
+
+      await query(
+        `
+          UPDATE inventario
+          SET stock_fisico = stock_fisico - $2,
+              ultima_actualizacion = CURRENT_TIMESTAMP
+          WHERE id_libro = $1
+        `,
+        [item.bookId, item.quantity],
+        client
+      );
     }
 
     await query(
