@@ -1,0 +1,103 @@
+.main-container {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  padding: 10px;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f4a261;
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 20px;
+  color: #1d3557;
+}
+
+.search-bar {
+  flex: 1;
+  margin: 0 20px;
+  padding: 8px;
+  border-radius: 20px;
+  border: none;
+}
+
+.nav-icons .icon {
+  margin-left: 10px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Hero */
+.hero {
+  background-color: #f4a261;
+  margin: 15px 0;
+  padding: 30px;
+  text-align: center;
+  border-radius: 15px;
+}
+
+/* Layout */
+.content {
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 150px;
+  padding: 10px;
+}
+
+.sidebar p {
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  text-align: center;
+}
+
+/* Books */
+.book-grid {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.book-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  width: 150px;
+}
+
+.book-image {
+  height: 120px;
+  background-color: #d9a066;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+button {
+  background-color: #0077b6;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #023e8a;
+}

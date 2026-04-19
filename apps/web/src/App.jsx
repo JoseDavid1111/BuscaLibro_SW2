@@ -1,6 +1,7 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import MainPage from './pages/MainPage';
 
 function DashboardPage() {
   return <h1>Dashboard</h1>;
@@ -18,7 +19,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<MainPage />} />
     </Routes>
   );
 }
