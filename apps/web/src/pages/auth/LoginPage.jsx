@@ -1,79 +1,94 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({
+    email: 'jose@buscalibro.local',
+    password: '123456',
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  function handleChange(e) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate, user]);
+
+  function handleChange(event) {
+    const { name, value } = event.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
     setError('');
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
     setLoading(true);
     setError('');
 
     try {
       await login(form.email, form.password);
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión');
+      setError(err.message || 'Error al iniciar sesion');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="login-wrapper">
-      <div className="login-card">
-        <div className="login-header">
+    <div className="login-screen">
+      <section className="login-panel">
+        <div className="login-copy">
           <h1 className="login-title">BuscaLibro</h1>
-          <p className="login-subtitle">Inicia sesión para continuar</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form" noValidate>
-          <div className="field">
-            <label htmlFor="email">Correo electrónico</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="usuario@libreria.com"
-              required
-            />
+        <div className="login-card">
+          <div className="login-header">
+            <h2 className="card-title">Iniciar sesion</h2>
           </div>
 
-          <div className="field">
-            <label htmlFor="password">Contraseña</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="login-form" noValidate>
+            <div className="field">
+              <label htmlFor="email">Correo electronico</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="usuario@libreria.com"
+                required
+              />
+            </div>
 
-          {error && <p className="login-error">{error}</p>}
+            <div className="field">
+              <label htmlFor="password">Contrasena</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Ingresa tu contrasena"
+                required
+              />
+            </div>
 
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? 'Ingresando...' : 'Ingresar'}
-          </button>
-        </form>
-      </div>
+            {error ? <p className="login-error">{error}</p> : null}
+
+            <button type="submit" className="primary-button" disabled={loading}>
+              {loading ? 'Ingresando...' : 'Ingresar al panel'}
+            </button>
+          </form>
+        </div>
+      </section>
     </div>
   );
 }

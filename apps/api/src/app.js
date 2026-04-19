@@ -1,5 +1,5 @@
 const { createRouter } = require("./lib/http");
-const { login } = require("./modules/auth/auth.controller");
+const { login, me } = require("./modules/auth/auth.controller");
 const {
   listBooks,
   getBookById,
@@ -32,6 +32,7 @@ function createApp() {
   }));
 
   router.post("/api/auth/login", login);
+  router.get("/api/auth/me", me);
 
   router.get("/api/books", listBooks);
   router.get("/api/books/lookup", getBookLookup);

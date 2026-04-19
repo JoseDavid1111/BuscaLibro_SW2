@@ -50,6 +50,45 @@ async function main() {
     assert.equal(health.status, 200);
     assert.equal(health.body.ok, true);
 
+    const login = await request("POST", "/api/auth/login", {
+      email: "jose@buscalibro.local",
+      password: "123456",
+    });
+    assert.equal(login.status, 200);
+    assert.ok(login.body.token);
+    assert.equal(login.body.user.email, "jose@buscalibro.local");
+
+    const me = await new Promise((resolve, reject) => {
+      const req = http.request(
+        {
+          host: "127.0.0.1",
+          port: 3200,
+          path: "/api/auth/me",
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${login.body.token}`,
+          },
+        },
+        (res) => {
+          let data = "";
+          res.on("data", (chunk) => {
+            data += chunk;
+          });
+          res.on("end", () => {
+            resolve({
+              status: res.statusCode,
+              body: JSON.parse(data),
+            });
+          });
+        }
+      );
+
+      req.on("error", reject);
+      req.end();
+    });
+    assert.equal(me.status, 200);
+    assert.equal(me.body.user.email, "jose@buscalibro.local");
+
     const order = await request("POST", "/api/orders", {
       userId: "2",
       items: [{ bookId: "3", quantity: 1 }],

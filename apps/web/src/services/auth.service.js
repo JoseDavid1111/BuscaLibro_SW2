@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('token');
@@ -7,7 +7,9 @@ function getAuthHeaders() {
 
 async function handleResponse(res) {
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Error inesperado');
+  if (!res.ok) {
+    throw new Error(data.message || data.error || 'Error inesperado');
+  }
   return data;
 }
 

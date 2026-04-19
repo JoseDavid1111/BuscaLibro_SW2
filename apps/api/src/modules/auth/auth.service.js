@@ -1,38 +1,82 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { db } = require('../../config/db');
+const jwt = require("jsonwebtoken");
+const { findUserByCredentials, findUserById } = require("../../data/store");
+const { HttpError } = require("../../lib/http");
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
+const JWT_SECRET = process.env.JWT_SECRET || "buscalibro-dev-secret";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "8h";
 
 async function loginUser(email, password) {
-  const user = await db('users').where({ email }).first();
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedPassword = String(password || "");
 
-  if (!user) throw new Error('Credenciales inválidas');
+  if (!normalizedEmail || !normalizedPassword) {
+    throw new HttpError(400, "Email y password son obligatorios");
+  }
 
-  const passwordMatch = await bcrypt.compare(password, user.password_hash);
-  if (!passwordMatch) throw new Error('Credenciales inválidas');
+  const user = await findUserByCredentials({
+    email: normalizedEmail,
+    password: normalizedPassword,
+  });
+
+  if (!user) {
+    throw new HttpError(401, "Credenciales invalidas");
+  }
 
   const token = jwt.sign(
-    { userId: user.id, role: user.role },
+    {
+      userId: user.id,
+      role: user.role,
+    },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );
 
   return {
     token,
-    user: {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    },
+    user: serializeUser(user),
   };
 }
 
-async function getUserById(id) {
-  const user = await db('users').where({ id }).select('id', 'email', 'role', 'created_at').first();
-  if (!user) throw new Error('Usuario no encontrado');
-  return user;
+async function getCurrentUser(userId) {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new HttpError(404, "Usuario no encontrado");
+  }
+
+  return serializeUser(user);
 }
 
-module.exports = { loginUser, getUserById };
+function readTokenFromHeaders(headers = {}) {
+  const authHeader = headers.authorization || headers.Authorization;
+
+  if (!authHeader || !String(authHeader).startsWith("Bearer ")) {
+    throw new HttpError(401, "Token no proporcionado");
+  }
+
+  return String(authHeader).slice("Bearer ".length).trim();
+}
+
+function verifyAccessToken(token) {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    throw new HttpError(401, "Token invalido o expirado");
+  }
+}
+
+function serializeUser(user) {
+  return {
+    id: String(user.id),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+}
+
+module.exports = {
+  loginUser,
+  getCurrentUser,
+  readTokenFromHeaders,
+  verifyAccessToken,
+};

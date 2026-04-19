@@ -13,7 +13,10 @@ export function AuthProvider({ children }) {
 
     authService.me()
       .then(({ user }) => setUser(user))
-      .catch(() => localStorage.removeItem('token'))
+      .catch(() => {
+        localStorage.removeItem('token');
+        setUser(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 

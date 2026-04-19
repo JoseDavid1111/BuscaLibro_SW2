@@ -18,6 +18,11 @@ function createRouter() {
 
   const handler = async (req, res) => {
     try {
+      if (req.method === "OPTIONS") {
+        sendJson(res, 204);
+        return;
+      }
+
       const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
       const route = matchRoute(routes, req.method, url.pathname);
 
@@ -132,7 +137,14 @@ function parseBody(req) {
 function sendJson(res, status, body) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   });
+  if (status === 204) {
+    res.end();
+    return;
+  }
   res.end(JSON.stringify(body, null, 2));
 }
 

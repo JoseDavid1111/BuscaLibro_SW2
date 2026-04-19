@@ -1,23 +1,37 @@
-const { loginUser, getUserById } = require('./auth.service');
+const { HttpError } = require("../../lib/http");
+const {
+  loginUser,
+  getCurrentUser,
+  readTokenFromHeaders,
+  verifyAccessToken,
+} = require("./auth.service");
 
-async function login(req, res) {
-  try {
-    const { email, password } = req.body;
-    const { token, user } = await loginUser(email, password);
-    res.json({ token, user });
-  } catch (err) {
-    const status = err.message === 'Credenciales inválidas' ? 401 : 500;
-    res.status(status).json({ error: err.message });
+async function login({ body }) {
+  const email = body?.email;
+  const password = body?.password;
+
+  if (!email || !password) {
+    throw new HttpError(400, "Los campos email y password son obligatorios");
   }
+
+  return {
+    status: 200,
+    body: await loginUser(email, password),
+  };
 }
 
-async function me(req, res) {
-  try {
-    const user = await getUserById(req.userId);
-    res.json({ user });
-  } catch (err) {
-    res.status(404).json({ error: err.message });
-  }
+async function me({ req }) {
+  const token = readTokenFromHeaders(req.headers);
+  const payload = verifyAccessToken(token);
+  const user = await getCurrentUser(payload.userId);
+
+  return {
+    status: 200,
+    body: { user },
+  };
 }
 
-module.exports = { login, me };
+module.exports = {
+  login,
+  me,
+};
