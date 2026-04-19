@@ -4,7 +4,8 @@
   "description": "Monorepo para el proyecto buscalibro",
   "private": true,
   "workspaces": [
-    "apps/*",
+    "apps/api",
+    "apps/web",
     "packages/*"
   ],
   "main": "index.js",

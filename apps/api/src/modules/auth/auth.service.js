@@ -1,24 +1,38 @@
-const { findUserByCredentials } = require("../../data/store");
-const { HttpError } = require("../../lib/http");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { db } = require('../../config/db');
 
-async function loginUser(credentials) {
-  const user = await findUserByCredentials(credentials);
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
-  if (!user) {
-    throw new HttpError(401, "Credenciales invalidas");
-  }
+async function loginUser(email, password) {
+  const user = await db('users').where({ email }).first();
+
+  if (!user) throw new Error('Credenciales inválidas');
+
+  const passwordMatch = await bcrypt.compare(password, user.password_hash);
+  if (!passwordMatch) throw new Error('Credenciales inválidas');
+
+  const token = jwt.sign(
+    { userId: user.id, role: user.role },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
 
   return {
-    token: `mock-token-${user.id}`,
+    token,
     user: {
       id: user.id,
-      name: user.name,
       email: user.email,
       role: user.role,
     },
   };
 }
 
-module.exports = {
-  loginUser,
-};
+async function getUserById(id) {
+  const user = await db('users').where({ id }).select('id', 'email', 'role', 'created_at').first();
+  if (!user) throw new Error('Usuario no encontrado');
+  return user;
+}
+
+module.exports = { loginUser, getUserById };

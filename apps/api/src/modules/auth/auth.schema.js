@@ -1,20 +1,12 @@
-const { HttpError } = require("../../lib/http");
+const { z } = require('zod');
 
-function validateLoginPayload(payload) {
-  if (!payload || typeof payload !== "object") {
-    throw new HttpError(400, "Debe enviar un cuerpo JSON con email y password");
-  }
+const loginSchema = z.object({
+  email: z
+    .string({ required_error: 'El email es requerido' })
+    .email('Email inválido'),
+  password: z
+    .string({ required_error: 'La contraseña es requerida' })
+    .min(6, 'La contraseña debe tener al menos 6 caracteres'),
+});
 
-  if (!payload.email || !payload.password) {
-    throw new HttpError(400, "Los campos email y password son obligatorios");
-  }
-
-  return {
-    email: String(payload.email).trim().toLowerCase(),
-    password: String(payload.password),
-  };
-}
-
-module.exports = {
-  validateLoginPayload,
-};
+module.exports = { loginSchema };
