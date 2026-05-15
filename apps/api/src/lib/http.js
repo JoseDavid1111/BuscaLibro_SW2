@@ -11,9 +11,11 @@ class HttpError extends Error {
 function createRouter() {
   const routes = [];
 
-  const add = (method, path, action) => {
+  const add = (method, path, ...handlers) => {
     const { regex, keys } = compilePath(path);
-    routes.push({ method, path, regex, keys, action });
+    const middlewares = handlers.slice(0, -1);
+    const action = handlers[handlers.length - 1];
+    routes.push({ method, path, regex, keys, middlewares, action });
   };
 
   const handler = async (req, res) => {
@@ -27,16 +29,33 @@ function createRouter() {
       }
 
       const body = await parseBody(req);
-      const ctx = {
-        req,
-        res,
-        body,
-        query: Object.fromEntries(url.searchParams.entries()),
-        params: route.params,
-      };
+      res.json = (data) => sendJson(res, 200, data);
+      res.status = (code) => ({ json: (data) => sendJson(res, code, data) });
+      req.query = Object.fromEntries(url.searchParams.entries());
+      req.params = route.params;
+      req.body = body;
 
-      const result = await route.action(ctx);
-      sendJson(res, result.status || 200, result.body);
+      for (const middleware of route.middlewares) {
+        await new Promise((resolve, reject) => {
+          let called = false;
+          const next = (err) => {
+            if (called) return;
+            called = true;
+            if (err) return reject(err);
+            resolve();
+          };
+          middleware(req, res, next);
+          if (!called && res.writableEnded) {
+            resolve();
+          }
+        });
+        if (res.writableEnded) return;
+      }
+
+      const result = await route.action(req, res);
+      if (!res.writableEnded) {
+        sendJson(res, result.status || 200, result.body);
+      }
     } catch (error) {
       if (error instanceof HttpError) {
         sendJson(res, error.status, {
@@ -54,10 +73,10 @@ function createRouter() {
   };
 
   return {
-    get: (path, action) => add("GET", path, action),
-    post: (path, action) => add("POST", path, action),
-    put: (path, action) => add("PUT", path, action),
-    delete: (path, action) => add("DELETE", path, action),
+    get: (path, ...handlers) => add("GET", path, ...handlers),
+    post: (path, ...handlers) => add("POST", path, ...handlers),
+    put: (path, ...handlers) => add("PUT", path, ...handlers),
+    delete: (path, ...handlers) => add("DELETE", path, ...handlers),
     handler,
   };
 }
