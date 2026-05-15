@@ -3,21 +3,21 @@ const http = require("node:http");
 
 const { createApp } = require("../src/app");
 
-function request(method, path, body) {
+function request(method, path, body, headers = {}) {
   return new Promise((resolve, reject) => {
     const payload = body ? JSON.stringify(body) : null;
+    const reqHeaders = { ...headers };
+    if (payload) {
+      reqHeaders["Content-Type"] = "application/json";
+      reqHeaders["Content-Length"] = Buffer.byteLength(payload);
+    }
     const req = http.request(
       {
         host: "127.0.0.1",
         port: 3200,
         path,
         method,
-        headers: payload
-          ? {
-              "Content-Type": "application/json",
-              "Content-Length": Buffer.byteLength(payload),
-            }
-          : {},
+        headers: reqHeaders,
       },
       (res) => {
         let data = "";
@@ -50,10 +50,19 @@ async function main() {
     assert.equal(health.status, 200);
     assert.equal(health.body.ok, true);
 
+    const loginRes = await request("POST", "/api/auth/login", {
+      email: "jose@buscalibro.local",
+      password: "123456",
+    });
+    assert.equal(loginRes.status, 200);
+    assert.ok(loginRes.body.token);
+
+    const authHeaders = { Authorization: `Bearer ${loginRes.body.token}` };
+
     const order = await request("POST", "/api/orders", {
       userId: "2",
       items: [{ bookId: "3", quantity: 1 }],
-    });
+    }, authHeaders);
     assert.equal(order.status, 201);
     assert.equal(order.body.total, 48000);
 
