@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "node test/api.smoke.js"
+    "test": "node test/api.smoke.js",
+    "test:unit": "node test/unit.services.test.js",
+    "test:integration": "node test/api.integration.test.js",
+    "test:all": "node test/api.smoke.js && node test/unit.services.test.js && node test/api.integration.test.js"
   },
   "keywords": [
     "node",

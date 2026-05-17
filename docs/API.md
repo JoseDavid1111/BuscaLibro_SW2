@@ -20,18 +20,47 @@ DATABASE_SSL=true
 
 ## Endpoints principales
 
+### Salud
 - `GET /health`
+
+### Auth
 - `POST /api/auth/login`
-- `GET /api/books`
-- `GET /api/books/lookup?value=BL-001`
+- `GET /api/auth/me`
+
+### Libros (CRUD completo)
+- `GET /api/books` — Listar (filtros: q, author, category, availability)
+- `GET /api/books/lookup?value=BL-001` — Búsqueda exacta por código, ISBN o título
 - `GET /api/books/:id`
+- `POST /api/books` — Crear
+- `PUT /api/books/:id` — Actualizar
+- `DELETE /api/books/:id` — Eliminación lógica (soft delete)
+
+### Autores (CRUD completo)
+- `GET /api/authors`
+- `GET /api/authors/:id`
+- `POST /api/authors`
+- `PUT /api/authors/:id`
+- `DELETE /api/authors/:id`
+
+### Categorías (CRUD completo)
+- `GET /api/categories`
+- `GET /api/categories/:id`
+- `POST /api/categories`
+- `PUT /api/categories/:id`
+- `DELETE /api/categories/:id`
+
+### Pedidos
 - `GET /api/orders`
 - `POST /api/orders`
-- `PUT /api/orders/:id`
-- `DELETE /api/orders/:id`
 - `GET /api/orders/:id`
+- `PUT /api/orders/:id`
+- `DELETE /api/orders/:id` — Cancelar pedido
 - `GET /api/users/:userId/orders`
+
+### Reportes
 - `GET /api/reports/statistics`
+
+### Exchange (Import/Export JSON)
 - `GET /api/exchange/orders/export`
 - `POST /api/exchange/orders/import`
 

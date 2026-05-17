@@ -1,6 +1,13 @@
 const { HttpError } = require("../../lib/http");
-const { normalizeBookFilters } = require("./books.schema");
-const { listAllBooks, findBookById, lookupBook } = require("./books.service");
+const { normalizeBookFilters, validateCreateBook, validateUpdateBook } = require("./books.schema");
+const {
+  listAllBooks,
+  findBookById,
+  lookupBook,
+  createNewBook,
+  editBook,
+  removeBook,
+} = require("./books.service");
 
 async function listBooks({ query }) {
   return {
@@ -29,8 +36,32 @@ async function getBookLookup({ query }) {
   };
 }
 
+async function createBook({ body }) {
+  return {
+    status: 201,
+    body: await createNewBook(validateCreateBook(body)),
+  };
+}
+
+async function updateBook({ params, body }) {
+  return {
+    status: 200,
+    body: await editBook(params.id, validateUpdateBook(body)),
+  };
+}
+
+async function deleteBook({ params }) {
+  return {
+    status: 200,
+    body: await removeBook(params.id),
+  };
+}
+
 module.exports = {
   listBooks,
   getBookById,
   getBookLookup,
+  createBook,
+  updateBook,
+  deleteBook,
 };
