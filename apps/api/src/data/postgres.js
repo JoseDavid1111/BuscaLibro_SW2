@@ -442,6 +442,357 @@ async function getStatistics() {
   };
 }
 
+async function listAuthors() {
+  const result = await query(`
+    SELECT
+      id_autor::text AS id,
+      nombre AS name,
+      nacionalidad AS nationality,
+      COALESCE(descripcion, '') AS description
+    FROM autores
+    ORDER BY id_autor
+  `);
+
+  return result.rows;
+}
+
+async function findAuthorById(authorId) {
+  const result = await query(
+    `
+    SELECT
+      id_autor::text AS id,
+      nombre AS name,
+      nacionalidad AS nationality,
+      COALESCE(descripcion, '') AS description
+    FROM autores
+    WHERE id_autor = $1
+    LIMIT 1
+  `,
+    [authorId]
+  );
+
+  if (!result.rows[0]) {
+    throw new HttpError(404, "Autor no encontrado");
+  }
+
+  return result.rows[0];
+}
+
+async function createAuthor(data) {
+  const result = await query(
+    `
+    INSERT INTO autores (nombre, nacionalidad, descripcion)
+    VALUES ($1, $2, $3)
+    RETURNING id_autor::text AS id, nombre AS name, nacionalidad AS nationality, COALESCE(descripcion, '') AS description
+  `,
+    [data.name, data.nationality || null, data.description || null]
+  );
+
+  return result.rows[0];
+}
+
+async function updateAuthor(authorId, data) {
+  const fields = [];
+  const params = [];
+  let idx = 1;
+
+  if (data.name !== undefined) {
+    fields.push(`nombre = $${idx++}`);
+    params.push(data.name);
+  }
+  if (data.nationality !== undefined) {
+    fields.push(`nacionalidad = $${idx++}`);
+    params.push(data.nationality);
+  }
+  if (data.description !== undefined) {
+    fields.push(`descripcion = $${idx++}`);
+    params.push(data.description);
+  }
+
+  if (fields.length === 0) {
+    return findAuthorById(authorId);
+  }
+
+  params.push(authorId);
+  const result = await query(
+    `
+    UPDATE autores
+    SET ${fields.join(", ")}
+    WHERE id_autor = $${idx}
+    RETURNING id_autor::text AS id, nombre AS name, nacionalidad AS nationality, COALESCE(descripcion, '') AS description
+  `,
+    params
+  );
+
+  if (!result.rows[0]) {
+    throw new HttpError(404, "Autor no encontrado");
+  }
+
+  return result.rows[0];
+}
+
+async function deleteAuthor(authorId) {
+  const bookCheck = await query(
+    "SELECT COUNT(*)::int AS count FROM libros WHERE id_autor = $1 AND esta_activo = TRUE",
+    [authorId]
+  );
+
+  if (bookCheck.rows[0].count > 0) {
+    throw new HttpError(409, "No se puede eliminar un autor con libros activos");
+  }
+
+  const result = await query(
+    `
+    DELETE FROM autores WHERE id_autor = $1
+    RETURNING id_autor::text AS id, nombre AS name
+  `,
+    [authorId]
+  );
+
+  if (!result.rows[0]) {
+    throw new HttpError(404, "Autor no encontrado");
+  }
+
+  return result.rows[0];
+}
+
+async function listCategories() {
+  const result = await query(`
+    SELECT
+      id_categoria::text AS id,
+      nombre_categoria AS name
+    FROM categorias
+    ORDER BY id_categoria
+  `);
+
+  return result.rows;
+}
+
+async function findCategoryById(categoryId) {
+  const result = await query(
+    `
+    SELECT
+      id_categoria::text AS id,
+      nombre_categoria AS name
+    FROM categorias
+    WHERE id_categoria = $1
+    LIMIT 1
+  `,
+    [categoryId]
+  );
+
+  if (!result.rows[0]) {
+    throw new HttpError(404, "Categoria no encontrada");
+  }
+
+  return result.rows[0];
+}
+
+async function createCategory(data) {
+  const dupCheck = await query(
+    "SELECT id_categoria FROM categorias WHERE LOWER(nombre_categoria) = LOWER($1)",
+    [data.name]
+  );
+
+  if (dupCheck.rows[0]) {
+    throw new HttpError(409, "Ya existe una categoria con ese nombre");
+  }
+
+  const result = await query(
+    `
+    INSERT INTO categorias (nombre_categoria)
+    VALUES ($1)
+    RETURNING id_categoria::text AS id, nombre_categoria AS name
+  `,
+    [data.name]
+  );
+
+  return result.rows[0];
+}
+
+async function updateCategory(categoryId, data) {
+  if (data.name !== undefined) {
+    const dupCheck = await query(
+      "SELECT id_categoria FROM categorias WHERE LOWER(nombre_categoria) = LOWER($1) AND id_categoria <> $2",
+      [data.name, categoryId]
+    );
+
+    if (dupCheck.rows[0]) {
+      throw new HttpError(409, "Ya existe otra categoria con ese nombre");
+    }
+
+    const result = await query(
+      `
+      UPDATE categorias
+      SET nombre_categoria = $2
+      WHERE id_categoria = $1
+      RETURNING id_categoria::text AS id, nombre_categoria AS name
+    `,
+      [categoryId, data.name]
+    );
+
+    if (!result.rows[0]) {
+      throw new HttpError(404, "Categoria no encontrada");
+    }
+
+    return result.rows[0];
+  }
+
+  return findCategoryById(categoryId);
+}
+
+async function deleteCategory(categoryId) {
+  const bookCheck = await query(
+    "SELECT COUNT(*)::int AS count FROM libros WHERE id_categoria = $1 AND esta_activo = TRUE",
+    [categoryId]
+  );
+
+  if (bookCheck.rows[0].count > 0) {
+    throw new HttpError(409, "No se puede eliminar una categoria con libros activos");
+  }
+
+  const result = await query(
+    `
+    DELETE FROM categorias WHERE id_categoria = $1
+    RETURNING id_categoria::text AS id, nombre_categoria AS name
+  `,
+    [categoryId]
+  );
+
+  if (!result.rows[0]) {
+    throw new HttpError(404, "Categoria no encontrada");
+  }
+
+  return result.rows[0];
+}
+
+async function createBookInStore(data) {
+  const authorCheck = await query(
+    "SELECT id_autor FROM autores WHERE id_autor = $1",
+    [data.authorId]
+  );
+  if (!authorCheck.rows[0]) {
+    throw new HttpError(404, "Autor no encontrado");
+  }
+
+  const categoryCheck = await query(
+    "SELECT id_categoria FROM categorias WHERE id_categoria = $1",
+    [data.categoryId]
+  );
+  if (!categoryCheck.rows[0]) {
+    throw new HttpError(404, "Categoria no encontrada");
+  }
+
+  return withTransaction(async (client) => {
+    const bookInsert = await query(
+      `
+      INSERT INTO libros (codigo_libro, isbn, titulo, descripcion, id_autor, id_categoria, editorial, anio_publicacion, precio, esta_activo)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE)
+      RETURNING id_libro::text AS id
+    `,
+      [
+        data.code || null,
+        data.isbn,
+        data.title,
+        data.description || null,
+        data.authorId,
+        data.categoryId,
+        data.editorial || null,
+        data.anioPublicacion || null,
+        data.price || 0,
+      ],
+      client
+    );
+
+    const bookId = bookInsert.rows[0].id;
+
+    await query(
+      `
+      INSERT INTO inventario (id_libro, stock_fisico, stock_reservado)
+      VALUES ($1, $2, 0)
+    `,
+      [bookId, data.stock || 0],
+      client
+    );
+
+    return findBookById(bookId);
+  });
+}
+
+async function updateBookInStore(bookId, data) {
+  const fields = [];
+  const params = [];
+  let idx = 1;
+
+  if (data.title !== undefined) { fields.push(`titulo = $${idx++}`); params.push(data.title); }
+  if (data.isbn !== undefined) { fields.push(`isbn = $${idx++}`); params.push(data.isbn); }
+  if (data.description !== undefined) { fields.push(`descripcion = $${idx++}`); params.push(data.description); }
+  if (data.editorial !== undefined) { fields.push(`editorial = $${idx++}`); params.push(data.editorial); }
+  if (data.anioPublicacion !== undefined) { fields.push(`anio_publicacion = $${idx++}`); params.push(data.anioPublicacion); }
+  if (data.price !== undefined) { fields.push(`precio = $${idx++}`); params.push(data.price); }
+  if (data.code !== undefined) { fields.push(`codigo_libro = $${idx++}`); params.push(data.code); }
+  if (data.authorId !== undefined) {
+    const authorCheck = await query("SELECT id_autor FROM autores WHERE id_autor = $1", [data.authorId]);
+    if (!authorCheck.rows[0]) throw new HttpError(404, "Autor no encontrado");
+    fields.push(`id_autor = $${idx++}`);
+    params.push(data.authorId);
+  }
+  if (data.categoryId !== undefined) {
+    const categoryCheck = await query("SELECT id_categoria FROM categorias WHERE id_categoria = $1", [data.categoryId]);
+    if (!categoryCheck.rows[0]) throw new HttpError(404, "Categoria no encontrada");
+    fields.push(`id_categoria = $${idx++}`);
+    params.push(data.categoryId);
+  }
+
+  if (fields.length > 0) {
+    params.push(bookId);
+    const result = await query(
+      `UPDATE libros SET ${fields.join(", ")} WHERE id_libro = $${idx} RETURNING id_libro::text AS id`,
+      params
+    );
+
+    if (!result.rows[0]) {
+      throw new HttpError(404, "Libro no encontrado");
+    }
+  }
+
+  if (data.stock !== undefined) {
+    await query(
+      `UPDATE inventario SET stock_fisico = $2, ultima_actualizacion = CURRENT_TIMESTAMP WHERE id_libro = $1`,
+      [bookId, data.stock]
+    );
+  }
+
+  return findBookById(bookId);
+}
+
+async function deleteBookFromStore(bookId) {
+  const orderCheck = await query(
+    `
+    SELECT COUNT(*)::int AS count
+    FROM detalle_pedidos dp
+    JOIN pedidos p ON p.id_pedido = dp.id_pedido
+    WHERE dp.id_libro = $1 AND p.estado <> 'Cancelado'
+  `,
+    [bookId]
+  );
+
+  if (orderCheck.rows[0].count > 0) {
+    throw new HttpError(409, "No se puede eliminar un libro con pedidos activos");
+  }
+
+  const result = await query(
+    `UPDATE libros SET esta_activo = FALSE WHERE id_libro = $1 RETURNING id_libro::text AS id`,
+    [bookId]
+  );
+
+  if (!result.rows[0]) {
+    throw new HttpError(404, "Libro no encontrado");
+  }
+
+  return result.rows[0];
+}
+
 function mapBookRow(row) {
   return {
     id: row.id,
@@ -644,6 +995,20 @@ async function loadOrders(orderId = null, userId = null, client = getPool()) {
   }));
 }
 
+async function listUsers() {
+  const result = await query(`
+    SELECT
+      id_usuario::text AS id,
+      nombre AS name,
+      correo AS email,
+      rol AS role
+    FROM usuarios
+    WHERE activo = TRUE
+    ORDER BY id_usuario
+  `);
+  return result.rows;
+}
+
 async function loadSingleOrder(orderId, client = getPool()) {
   const orders = await loadOrders(orderId, null, client);
   if (!orders[0]) {
@@ -658,6 +1023,9 @@ module.exports = {
   listBooks,
   findBookById,
   lookupBook,
+  createBookInStore,
+  updateBookInStore,
+  deleteBookFromStore,
   listOrders,
   findOrderById,
   createOrder,
@@ -665,4 +1033,15 @@ module.exports = {
   cancelOrder,
   listOrdersByUser,
   getStatistics,
+  listAuthors,
+  findAuthorById,
+  createAuthor,
+  updateAuthor,
+  deleteAuthor,
+  listCategories,
+  findCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  listUsers,
 };

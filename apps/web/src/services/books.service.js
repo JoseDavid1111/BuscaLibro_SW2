@@ -43,4 +43,30 @@ export const booksService = {
     });
     return handleResponse(res);
   },
+
+  async create(bookData) {
+    const res = await fetch(`${API_URL}/books`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(bookData),
+    });
+    return handleResponse(res);
+  },
+
+  async update(id, bookData) {
+    const res = await fetch(`${API_URL}/books/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(bookData),
+    });
+    return handleResponse(res);
+  },
+
+  async remove(id) {
+    const res = await fetch(`${API_URL}/books/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(res);
+  },
 };

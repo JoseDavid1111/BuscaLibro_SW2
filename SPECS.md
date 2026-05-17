@@ -308,7 +308,9 @@ Al cancelar pedido (`UPDATE pedidos SET estado = 'Cancelado'`):
 **Backend:**
 - [x] Router custom con soporte de middlewares
 - [x] Auth (login + me) con JWT
-- [x] CRUD de libros (lectura: list, lookup, byId)
+- [x] CRUD de libros (list, lookup, byId, create, update, delete)
+- [x] CRUD de autores (list, byId, create, update, delete)
+- [x] CRUD de categorías (list, byId, create, update, delete)
 - [x] CRUD de pedidos (crear, listar, editar, cancelar)
 - [x] Reportes (estadísticas)
 - [x] Exchange (import/export de pedidos)
@@ -323,10 +325,22 @@ Al cancelar pedido (`UPDATE pedidos SET estado = 'Cancelado'`):
 - [x] LoginPage
 - [x] AuthContext + AuthProvider
 - [x] ProtectedRoute
+- [x] DashboardLayout (sidebar + header + logout)
 - [x] AuthService (login + me)
-- [x] BooksService (list, getById, lookup)
+- [x] BooksService (list, getById, lookup, create, update, remove)
 - [x] OrdersService (list, getById, create, update, cancel, getUserHistory)
 - [x] ReportsService (getStatistics)
+- [x] AuthorsService (list, getById, create, update, remove)
+- [x] CategoriesService (list, getById, create, update, remove)
+- [x] UsersService (list)
+- [x] Modal component reusable
+- [x] InventoryPage (listado, búsqueda, filtros por autor/categoría/disponibilidad, CRUD completo)
+- [x] OrdersPage (listado, creación con selección de usuario y libros, edición, cancelación, detalle expandible)
+- [x] ReportsPage (dashboard estadístico: tarjetas de resumen, libros más solicitados, frecuencia por categoría, libros más caros)
+- [x] Estilos CSS completos para todas las páginas y componentes
+
+**Backend:**
+- [x] Endpoint GET /api/users (lista de usuarios activos para formularios)
 
 **Database:**
 - [x] Schema SQL completo
@@ -337,21 +351,8 @@ Al cancelar pedido (`UPDATE pedidos SET estado = 'Cancelado'`):
 ### ❌ Pendiente
 
 **Backend:**
-- [ ] CRUD completo de libros (POST, PUT, DELETE)
 - [ ] Módulo inventory (endpoints para ajuste de stock)
 - [ ] Módulo suppliers
-- [ ] CRUD de autores
-- [ ] CRUD de categorías
-- [ ] Tests unitarios e integración
-- [ ] Conectar middleware de validación Zod
-
-**Frontend:**
-- [ ] InventoryPage (listado, búsqueda, filtros)
-- [ ] OrdersPage (crear, listar, editar pedidos)
-- [ ] ReportsPage (dashboard estadístico)
-- [ ] Logout button + navegación
-- [ ] Layout principal (sidebar/header)
-- [ ] UI/CSS framework
 
 **Infraestructura:**
 - [ ] docker-compose.yml
@@ -399,6 +400,9 @@ npm test               # Corre tests de todos los workspaces
 npm run dev            # API con --watch (auto-reload)
 npm run start          # API producción
 npm run test           # Smoke tests
+npm run test:unit      # Tests unitarios
+npm run test:integration # Tests de integración
+npm run test:all       # Todos los tests
 
 # Web
 npm run dev            # Vite dev server
@@ -436,19 +440,47 @@ npm run preview        # Preview build
 
 ## 14. Historial de Cambios Recientes
 
-### Esta sesión:
+### Sesión actual (Fase 2 - Calidad y Conexiones):
 
 | Archivo | Cambio |
 |---|---|
-| `apps/api/src/lib/http.js` | Router ahora soporta middlewares + helpers res.json()/res.status() |
-| `apps/api/src/app.js` | verifyToken conectado a todas las rutas protegidas + endpoint /api/auth/me |
-| `apps/api/src/modules/auth/auth.service.js` | Soporta memory mode y postgres mode |
-| `apps/api/src/middlewares/auth.middleware.js` | JWT_SECRET con fallback consistente ('dev-secret') |
-| `apps/api/test/api.smoke.js` | Actualizado para autenticarse antes de crear pedidos |
-| `apps/web/src/services/books.service.js` | **Nuevo** - Servicio para libros (list, getById, lookup) |
-| `apps/web/src/services/orders.service.js` | **Nuevo** - Servicio para pedidos (CRUD + historial) |
-| `apps/web/src/services/reports.service.js` | **Nuevo** - Servicio para reportes (estadísticas) |
-| `SPECS.md` | **Nuevo** - Documento completo de especificaciones del proyecto |
+| `apps/api/src/middlewares/validate.middleware.js` | Fix para Zod v4 (`.issues` en vez de `.errors`) |
+| `apps/api/src/modules/books/books.schema.js` | + `createBookSchema`, `updateBookSchema` (Zod) |
+| `apps/api/src/modules/authors/authors.schema.js` | + `createAuthorSchema`, `updateAuthorSchema` (Zod) |
+| `apps/api/src/modules/categories/categories.schema.js` | + `createCategorySchema`, `updateCategorySchema` (Zod) |
+| `apps/api/src/modules/orders/orders.schema.js` | + `createOrderSchema`, `updateOrderSchema` (Zod) |
+| `apps/api/src/app.js` | + `validateBody` middleware conectado a POST/PUT de todas las rutas; GET /api/books público |
+| `apps/api/test/unit.services.test.js` | **Nuevo** - 18 tests unitarios para store (libros, autores, categorías, pedidos, reportes) |
+| `apps/api/test/api.integration.test.js` | **Nuevo** - 19 tests de integración sobre HTTP (health, auth, CRUD completo, exchange) |
+| `apps/api/package.json` | + scripts `test:unit`, `test:integration`, `test:all` |
+| `package.json` | + script `test:all` |
+| `apps/web/src/pages/MainPage.jsx` | **Reescrito** - Conexión a API, loading/error/empty states, busca por search bar, placeholders con gradientes |
+| `apps/web/src/pages/MainPage.css` | + `.login-link`, `.book-initials`, `.loading`, `.empty-text` |
+| `apps/web/src/pages/inventory/InventoryPage.jsx` | + Reset de error en openCreate/openEdit, error en handleDelete |
+| `apps/web/src/pages/orders/OrdersPage.jsx` | + Reset de error en openCreate/openEdit, error en handleCancel |
+| `apps/web/src/pages/reports/ReportsPage.jsx` | Error inline con botón reintentar en vez de pantalla completa; empty state |
+| `SPECS.md` | Actualizado estado actual e historial |
+
+### Sesiones anteriores (Fase 1 - Frontend):
+
+| Archivo | Cambio |
+|---|---|
+| `apps/api/.env` | Cambiado DATA_SOURCE de postgres a memory |
+| `apps/api/src/data/store.js` | + listUsers() |
+| `apps/api/src/data/postgres.js` | + listUsers() |
+| `apps/api/src/modules/auth/auth.service.js` | + listAllUsers() |
+| `apps/api/src/modules/auth/auth.controller.js` | + listUsers handler |
+| `apps/api/src/app.js` | + GET /api/users route |
+| `apps/web/src/services/books.service.js` | + create, update, remove methods |
+| `apps/web/src/services/authors.service.js` | **Nuevo** - Service de autores |
+| `apps/web/src/services/categories.service.js` | **Nuevo** - Service de categorías |
+| `apps/web/src/services/users.service.js` | **Nuevo** - Service de usuarios |
+| `apps/web/src/components/ui/Modal.jsx` | **Nuevo** - Componente modal reutilizable |
+| `apps/web/src/pages/inventory/InventoryPage.jsx` | **Reescrito** - CRUD completo con filtros, tabla y formulario modal |
+| `apps/web/src/pages/orders/OrdersPage.jsx` | **Reescrito** - Listado, creación, edición, cancelación y detalle expandible |
+| `apps/web/src/pages/reports/ReportsPage.jsx` | **Reescrito** - Dashboard estadístico con tarjetas y tablas |
+| `apps/web/src/index.css` | + Estilos para todas las páginas, tablas, modales, formularios, badges |
+| `SPECS.md` | Actualizado estado actual e historial |
 
 ### Commits anteriores:
 - `33c9861` Merge PR #20 - Add login
@@ -469,3 +501,7 @@ npm run preview        # Preview build
 4. **Trigger de inventario en DB:** La gestión de stock se delega a PostgreSQL, garantizando consistencia incluso con accesos concurrentes.
 
 5. **Sin CSS framework:** El frontend no usa librerías de UI, permitiendo diseño completamente custom pero requiere más trabajo manual.
+
+6. **GET /api/books público:** Los endpoints GET de libros no requieren autenticación para permitir que la landing page pública (MainPage) muestre el catálogo sin login. Las operaciones de escritura (POST/PUT/DELETE) siguen protegidas con JWT.
+
+7. **Doble validación (Zod + manual):** Los esquemas Zod validan el formato de entrada en el middleware, y las funciones manuales existentes (`validateCreateBook`, etc.) actúan como segunda capa de defensa y transformación de datos en los controladores.

@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "install-all": "npm install",
-    "test": "npm test --workspaces"
+    "test": "npm test --workspaces",
+    "test:all": "cd apps/api && npm run test:all"
   },
   "keywords": [],
   "author": "",

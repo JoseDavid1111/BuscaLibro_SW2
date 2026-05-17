@@ -29,6 +29,47 @@ const users = [
   },
 ];
 
+const authors = [
+  {
+    id: "1",
+    name: "Gabriel Garcia Marquez",
+    nationality: "Colombiana",
+    description: "Autor referente del realismo magico.",
+  },
+  {
+    id: "2",
+    name: "Jose Eustasio Rivera",
+    nationality: "Colombiana",
+    description: "Autor de literatura clasica colombiana.",
+  },
+  {
+    id: "3",
+    name: "Harper Lee",
+    nationality: "Estadounidense",
+    description: "Autora de novelas clasicas.",
+  },
+  {
+    id: "4",
+    name: "Yuval Noah Harari",
+    nationality: "Israeli",
+    description: "Autor de ensayo e historia.",
+  },
+  {
+    id: "5",
+    name: "Antoine de Saint-Exupery",
+    nationality: "Francesa",
+    description: "Autor de obras infantiles y filosoficas.",
+  },
+];
+
+const categories = [
+  { id: "1", name: "Novela" },
+  { id: "2", name: "Clasico" },
+  { id: "3", name: "Drama" },
+  { id: "4", name: "Historia" },
+  { id: "5", name: "Infantil" },
+];
+
 const books = [
   {
     id: "1",
@@ -37,7 +78,11 @@ const books = [
     title: "Cien anos de soledad",
     description: "Novela de realismo magico ambientada en Macondo.",
     authors: ["Gabriel Garcia Marquez"],
+    authorId: "1",
     category: "Novela",
+    categoryId: "1",
+    editorial: "Sudamericana",
+    anioPublicacion: 1967,
     price: 69000,
     stock: 12,
     active: true,
@@ -49,7 +94,11 @@ const books = [
     title: "La voragine",
     description: "Clasico colombiano sobre la selva y la explotacion.",
     authors: ["Jose Eustasio Rivera"],
+    authorId: "2",
     category: "Clasico",
+    categoryId: "2",
+    editorial: "Panamericana",
+    anioPublicacion: 1924,
     price: 52000,
     stock: 6,
     active: true,
@@ -61,7 +110,11 @@ const books = [
     title: "Matar a un ruisenor",
     description: "Historia sobre justicia, infancia y prejuicio.",
     authors: ["Harper Lee"],
+    authorId: "3",
     category: "Drama",
+    categoryId: "3",
+    editorial: "Harper Perennial",
+    anioPublicacion: 1960,
     price: 48000,
     stock: 9,
     active: true,
@@ -73,7 +126,11 @@ const books = [
     title: "Sapiens",
     description: "Ensayo sobre la historia de la humanidad.",
     authors: ["Yuval Noah Harari"],
+    authorId: "4",
     category: "Historia",
+    categoryId: "4",
+    editorial: "Debate",
+    anioPublicacion: 2011,
     price: 87000,
     stock: 4,
     active: true,
@@ -85,7 +142,11 @@ const books = [
     title: "El principito",
     description: "Fabula sobre amistad, amor y sentido de la vida.",
     authors: ["Antoine de Saint-Exupery"],
+    authorId: "5",
     category: "Infantil",
+    categoryId: "5",
+    editorial: "Salamandra",
+    anioPublicacion: 1943,
     price: 35000,
     stock: 15,
     active: true,
@@ -504,12 +565,297 @@ function buildOrdersByCategory(activeOrders) {
     .sort((a, b) => b.quantity - a.quantity);
 }
 
+async function listAuthors() {
+  if (usePostgres()) {
+    return getPostgres().listAuthors();
+  }
+
+  return authors.map((a) => ({ ...a }));
+}
+
+async function findAuthorById(authorId) {
+  if (usePostgres()) {
+    return getPostgres().findAuthorById(authorId);
+  }
+
+  const author = authors.find((a) => a.id === String(authorId));
+  if (!author) {
+    throw new HttpError(404, "Autor no encontrado");
+  }
+
+  return { ...author };
+}
+
+async function createAuthor(data) {
+  if (usePostgres()) {
+    return getPostgres().createAuthor(data);
+  }
+
+  const id = String(authors.length + 1);
+  const author = {
+    id,
+    name: data.name,
+    nationality: data.nationality || "",
+    description: data.description || "",
+  };
+
+  authors.push(author);
+  return { ...author };
+}
+
+async function updateAuthor(authorId, data) {
+  if (usePostgres()) {
+    return getPostgres().updateAuthor(authorId, data);
+  }
+
+  const index = authors.findIndex((a) => a.id === String(authorId));
+  if (index === -1) {
+    throw new HttpError(404, "Autor no encontrado");
+  }
+
+  if (data.name !== undefined) authors[index].name = data.name;
+  if (data.nationality !== undefined) authors[index].nationality = data.nationality;
+  if (data.description !== undefined) authors[index].description = data.description;
+
+  return { ...authors[index] };
+}
+
+async function deleteAuthor(authorId) {
+  if (usePostgres()) {
+    return getPostgres().deleteAuthor(authorId);
+  }
+
+  const index = authors.findIndex((a) => a.id === String(authorId));
+  if (index === -1) {
+    throw new HttpError(404, "Autor no encontrado");
+  }
+
+  const hasBooks = books.some((b) => b.authorId === authorId && b.active);
+  if (hasBooks) {
+    throw new HttpError(409, "No se puede eliminar un autor con libros activos");
+  }
+
+  const [removed] = authors.splice(index, 1);
+  return { ...removed };
+}
+
+async function listCategories() {
+  if (usePostgres()) {
+    return getPostgres().listCategories();
+  }
+
+  return categories.map((c) => ({ ...c }));
+}
+
+async function findCategoryById(categoryId) {
+  if (usePostgres()) {
+    return getPostgres().findCategoryById(categoryId);
+  }
+
+  const category = categories.find((c) => c.id === String(categoryId));
+  if (!category) {
+    throw new HttpError(404, "Categoria no encontrada");
+  }
+
+  return { ...category };
+}
+
+async function createCategory(data) {
+  if (usePostgres()) {
+    return getPostgres().createCategory(data);
+  }
+
+  const name = data.name.trim();
+  const exists = categories.find((c) => c.name.toLowerCase() === name.toLowerCase());
+  if (exists) {
+    throw new HttpError(409, "Ya existe una categoria con ese nombre");
+  }
+
+  const id = String(categories.length + 1);
+  const category = { id, name };
+
+  categories.push(category);
+  return { ...category };
+}
+
+async function updateCategory(categoryId, data) {
+  if (usePostgres()) {
+    return getPostgres().updateCategory(categoryId, data);
+  }
+
+  const index = categories.findIndex((c) => c.id === String(categoryId));
+  if (index === -1) {
+    throw new HttpError(404, "Categoria no encontrada");
+  }
+
+  if (data.name !== undefined) {
+    const name = data.name.trim();
+    const duplicate = categories.find(
+      (c) => c.name.toLowerCase() === name.toLowerCase() && c.id !== String(categoryId)
+    );
+    if (duplicate) {
+      throw new HttpError(409, "Ya existe otra categoria con ese nombre");
+    }
+
+    categories[index].name = name;
+  }
+
+  return { ...categories[index] };
+}
+
+async function deleteCategory(categoryId) {
+  if (usePostgres()) {
+    return getPostgres().deleteCategory(categoryId);
+  }
+
+  const index = categories.findIndex((c) => c.id === String(categoryId));
+  if (index === -1) {
+    throw new HttpError(404, "Categoria no encontrada");
+  }
+
+  const hasBooks = books.some((b) => b.categoryId === categoryId && b.active);
+  if (hasBooks) {
+    throw new HttpError(409, "No se puede eliminar una categoria con libros activos");
+  }
+
+  const [removed] = categories.splice(index, 1);
+  return { ...removed };
+}
+
+async function createBookInStore(data) {
+  if (usePostgres()) {
+    return getPostgres().createBookInStore(data);
+  }
+
+  const author = authors.find((a) => a.id === String(data.authorId));
+  if (!author) {
+    throw new HttpError(404, "Autor no encontrado");
+  }
+
+  const category = categories.find((c) => c.id === String(data.categoryId));
+  if (!category) {
+    throw new HttpError(404, "Categoria no encontrada");
+  }
+
+  const id = String(books.length + 1);
+
+  const stock = Number(data.stock) || 0;
+
+  const book = {
+    id,
+    code: data.code || `BL-${String(id).padStart(3, "0")}`,
+    isbn: data.isbn,
+    title: data.title,
+    description: data.description || "",
+    authors: [author.name],
+    authorId: String(data.authorId),
+    category: category.name,
+    categoryId: String(data.categoryId),
+    editorial: data.editorial || "",
+    anioPublicacion: data.anioPublicacion || null,
+    price: Number(data.price) || 0,
+    stock,
+    active: true,
+  };
+
+  books.push(book);
+  return {
+    ...book,
+    availability: book.stock > 0 ? "Available" : "Reserved",
+  };
+}
+
+async function updateBookInStore(bookId, data) {
+  if (usePostgres()) {
+    return getPostgres().updateBookInStore(bookId, data);
+  }
+
+  const index = books.findIndex((b) => b.id === String(bookId) && b.active);
+  if (index === -1) {
+    throw new HttpError(404, "Libro no encontrado");
+  }
+
+  const book = books[index];
+
+  if (data.title !== undefined) book.title = data.title;
+  if (data.isbn !== undefined) book.isbn = data.isbn;
+  if (data.description !== undefined) book.description = data.description;
+  if (data.editorial !== undefined) book.editorial = data.editorial;
+  if (data.anioPublicacion !== undefined) book.anioPublicacion = data.anioPublicacion;
+  if (data.price !== undefined) book.price = Number(data.price);
+  if (data.stock !== undefined) book.stock = Number(data.stock);
+  if (data.code !== undefined) book.code = data.code;
+
+  if (data.authorId !== undefined) {
+    const author = authors.find((a) => a.id === String(data.authorId));
+    if (!author) {
+      throw new HttpError(404, "Autor no encontrado");
+    }
+    book.authorId = String(data.authorId);
+    book.authors = [author.name];
+  }
+
+  if (data.categoryId !== undefined) {
+    const category = categories.find((c) => c.id === String(data.categoryId));
+    if (!category) {
+      throw new HttpError(404, "Categoria no encontrada");
+    }
+    book.categoryId = String(data.categoryId);
+    book.category = category.name;
+  }
+
+  return {
+    ...book,
+    availability: book.stock > 0 ? "Available" : "Reserved",
+  };
+}
+
+async function deleteBookFromStore(bookId) {
+  if (usePostgres()) {
+    return getPostgres().deleteBookFromStore(bookId);
+  }
+
+  const index = books.findIndex((b) => b.id === String(bookId) && b.active);
+  if (index === -1) {
+    throw new HttpError(404, "Libro no encontrado");
+  }
+
+  const hasActiveOrders = orders.some(
+    (o) =>
+      o.status !== "Cancelado" &&
+      o.items.some((item) => item.bookId === String(bookId))
+  );
+  if (hasActiveOrders) {
+    throw new HttpError(409, "No se puede eliminar un libro con pedidos activos");
+  }
+
+  books[index].active = false;
+  return { id: String(bookId) };
+}
+
+async function listUsers() {
+  if (usePostgres()) {
+    return getPostgres().listUsers();
+  }
+  return users
+    .filter((u) => u.active)
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+    }));
+}
+
 module.exports = {
   findUserByCredentials,
   findUserById,
   listBooks,
   findBookById,
   lookupBook,
+  createBookInStore,
+  updateBookInStore,
+  deleteBookFromStore,
   listOrders,
   findOrderById,
   createOrder,
@@ -517,4 +863,15 @@ module.exports = {
   cancelOrder,
   listOrdersByUser,
   getStatistics,
+  listAuthors,
+  findAuthorById,
+  createAuthor,
+  updateAuthor,
+  deleteAuthor,
+  listCategories,
+  findCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  listUsers,
 };

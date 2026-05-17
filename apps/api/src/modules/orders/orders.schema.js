@@ -1,4 +1,22 @@
+const { z } = require('zod');
 const { HttpError } = require("../../lib/http");
+
+const orderItemSchema = z.object({
+  bookId: z.union([z.string(), z.number()]).transform(String),
+  quantity: z.number().int().positive('La cantidad debe ser un entero mayor que cero'),
+});
+
+const createOrderSchema = z.object({
+  userId: z.union([z.string(), z.number()]).transform(String),
+  items: z.array(orderItemSchema).min(1, 'El pedido debe incluir al menos un libro'),
+  source: z.string().optional().default('manual'),
+});
+
+const updateOrderSchema = z.object({
+  userId: z.union([z.string(), z.number()]).transform(String).optional(),
+  items: z.array(orderItemSchema).min(1, 'El pedido debe incluir al menos un libro').optional(),
+  source: z.string().optional(),
+});
 
 function validateOrderPayload(payload) {
   if (!payload || typeof payload !== "object") {
@@ -37,5 +55,7 @@ function validateOrderPayload(payload) {
 }
 
 module.exports = {
+  createOrderSchema,
+  updateOrderSchema,
   validateOrderPayload,
 };

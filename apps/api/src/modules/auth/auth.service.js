@@ -69,4 +69,9 @@ async function getUserById(id) {
   };
 }
 
-module.exports = { loginUser, getUserById };
+async function listAllUsers() {
+  const { listUsers } = require('../../data/store');
+  return listUsers();
+}
+
+module.exports = { loginUser, getUserById, listAllUsers };

@@ -1,21 +1,27 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/auth.service';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
+
+function getInitialUser() {
+  const token = localStorage.getItem('token');
+  return token ? undefined : null;
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(getInitialUser);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return setLoading(false);
+    if (user !== undefined) return;
+    let cancelled = false;
 
     authService.me()
-      .then(({ user }) => setUser(user))
-      .catch(() => localStorage.removeItem('token'))
-      .finally(() => setLoading(false));
-  }, []);
+      .then(({ user }) => { if (!cancelled) setUser(user); })
+      .catch(() => { if (!cancelled) { localStorage.removeItem('token'); setUser(null); } });
+
+    return () => { cancelled = true; };
+  }, [user]);
 
   const login = useCallback(async (email, password) => {
     const { token, user } = await authService.login(email, password);
@@ -29,7 +35,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading: user === undefined, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

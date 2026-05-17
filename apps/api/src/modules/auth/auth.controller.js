@@ -1,4 +1,4 @@
-const { loginUser, getUserById } = require('./auth.service');
+const { loginUser, getUserById, listAllUsers } = require('./auth.service');
 
 async function login(req, res) {
   try {
@@ -11,6 +11,11 @@ async function login(req, res) {
   }
 }
 
+async function listUsers(req) {
+  const users = await listAllUsers();
+  return { status: 200, body: users };
+}
+
 async function me(req, res) {
   try {
     const user = await getUserById(req.userId);
@@ -20,4 +25,4 @@ async function me(req, res) {
   }
 }
 
-module.exports = { login, me };
+module.exports = { login, me, listUsers };
